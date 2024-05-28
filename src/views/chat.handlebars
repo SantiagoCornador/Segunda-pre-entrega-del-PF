@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #chatContainer {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            list-style-type: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        #messages li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+        }
+        #chatForm {
+            display: flex;
+            flex-direction: column;
+        }
+        #chatForm input, #chatForm button {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #chatForm button {
+            background-color: #4caf50;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        #chatForm button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat</h1>
+    <div id="chatContainer">
+        <ul id="messages"></ul>
+        <form id="chatForm">
+            <input id="user" type="email" placeholder="Tu correo" required />
+            <input id="message" type="text" placeholder="Escribe un mensaje" required />
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messages = document.getElementById('messages');
+        const chatForm = document.getElementById('chatForm');
+
+        chatForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const user = document.getElementById('user').value;
+            const message = document.getElementById('message').value;
+            if (user && message) {
+                socket.emit('chatMessage', { user, message });
+                document.getElementById('message').value = '';
+            }
+        });
+
+        socket.on('chatMessage', (data) => {
+            const li = document.createElement('li');
+            li.textContent = `${data.user}: ${data.message}`;
+            messages.appendChild(li);
+        });
+
+        socket.on('loadMessages', (msgs) => {
+            msgs.forEach(data => {
+                const li = document.createElement('li');
+                li.textContent = `${data.user}: ${data.message}`;
+                messages.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>

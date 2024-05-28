@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos actualizados</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        #productList {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        #productList th, #productList td {
+            padding: 10px;
+            text-align: left;
+        }
+        #productList th {
+            background-color: #e0e0e0;
+        }
+        #productList tr:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+        #productList tr:nth-child(odd) {
+            background-color: #e8e8e8;
+        }
+        #productList td {
+            border-bottom: 1px solid #ccc;
+        }
+        .deleteButton {
+            background-color: #f28b82;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .deleteButton:hover {
+            background-color: #e57373;
+        }
+        #addProductForm {
+            background-color: #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #addProductForm label, #addProductForm input, #addProductForm button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        #addProductForm input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #addProductForm button {
+            background-color: #4caf50;
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+        #addProductForm button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Productos actualizados</h1>
+    <table id="productList">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each productos}}
+                <tr id="{{this._id}}">
+                    <td>{{this.title}}</td>
+                    <td>{{this.description}}</td>
+                    <td>${{this.price}}</td>
+                    <td><button class="deleteButton" data-id="{{this._id}}">Eliminar</button></td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <h2>Agregar Producto</h2>
+    <form id="addProductForm">
+        <label for="title">Título:</label>
+        <input type="text" id="title" name="title" required>
+        <label for="description">Descripción:</label>
+        <input type="text" id="description" name="description" required>
+        <label for="code">Código:</label>
+        <input type="text" id="code" name="code" required>
+        <label for="price">Precio:</label>
+        <input type="number" id="price" name="price" required>
+        <label for="stock">Stock:</label>
+        <input type="number" id="stock" name="stock" required>
+        <label for="category">Categoría:</label> 
+        <input type="text" id="category" name="category" required>
+        <button type="submit">Agregar Producto</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('newProduct', (newProduct) => {
+            const productList = document.querySelector('#productList tbody');
+            const row = document.createElement('tr');
+            row.id = newProduct._id;
+            row.innerHTML = `
+                <td>${newProduct.title}</td>
+                <td>${newProduct.description}</td>
+                <td>$${newProduct.price}</td>
+                <td><button class="deleteButton" data-id="${newProduct._id}">Eliminar</button></td>
+            `;
+            productList.appendChild(row);
+            setDeleteButtonEventListener(row);
+        });
+
+        socket.on('productDeleted', (productId) => {
+            const row = document.getElementById(productId);
+            if (row) {
+                row.remove();
+            }
+        });
+
+        document.getElementById('addProductForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const code = document.getElementById('code').value;
+            const price = document.getElementById('price').value;
+            const stock = document.getElementById('stock').value;
+            const category = document.getElementById('category').value;
+
+            try {
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, description, code, price, stock, category })
+                });
+
+                if (response.ok) {
+                    console.log('Producto agregado correctamente');
+                    document.getElementById('addProductForm').reset(); 
+                } else {
+                    console.error('Error al agregar el producto');
+                }
+            } catch (error) {
+                console.error('Error en la solicitud:', error);
+            }
+        });
+
+        function setDeleteButtonEventListener(row) {
+            const deleteButton = row.querySelector('.deleteButton');
+            deleteButton.addEventListener('click', async (event) => {
+                const productId = event.target.dataset.id;
+
+                try {
+                    const response = await fetch(`/api/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        console.log('Producto eliminado correctamente');
+                        socket.emit('deleteProduct', productId); 
+                    } else {
+                        console.error('Error al eliminar el producto');
+                    }
+                } catch (error) {
+                    console.error('Error en la solicitud:', error);
+                }
+            });
+        }
+
+
+        document.querySelectorAll('.deleteButton').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                const productId = event.target.dataset.id;
+
+                try {
+                    const response = await fetch(`/api/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        console.log('Producto eliminado correctamente');
+                        socket.emit('deleteProduct', productId); 
+                    } else {
+                        console.error('Error al eliminar el producto');
+                    }
+                } catch (error) {
+                    console.error('Error en la solicitud:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
