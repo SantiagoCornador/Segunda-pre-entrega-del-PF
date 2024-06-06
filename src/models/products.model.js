@@ -1,17 +1,22 @@
-import mongoose from "mongoose";
-
-const productCollection = "Productos"
+import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 
 const productSchema = new mongoose.Schema({
-    title: { type: String, required: true, max: 100 },
-    description: { type: String, required: true, max: 100 },
-    code: { type: String, required: true, max: 50 },
-    price: { type: Number, required: true},
-    status: { type: Boolean, required: false},
-    stock: { type: Number, required: true},
-    category: { type: String, required: true, max: 100 },
-})
+    title: String,
+    description: String,
+    code: String,
+    price: Number,
+    stock: Number,
+    category: String,
+    availability: Boolean,
+});
 
-const productModel = mongoose.model(productCollection, productSchema)
+productSchema.index({ title: 'text', description: 'text', code: 'text', category: 'text', availability: 'text' });
 
-export default productModel
+productSchema.plugin(mongoosePaginate);
+
+const ProductModel = mongoose.model('Producto', productSchema, 'productos');
+
+export default ProductModel;
+
+

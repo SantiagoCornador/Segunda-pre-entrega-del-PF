@@ -55,12 +55,12 @@
             margin: 0 auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        #addProductForm label, #addProductForm input, #addProductForm button {
+        #addProductForm label, #addProductForm input, #addProductForm select, #addProductForm button {
             display: block;
             width: 100%;
             margin-bottom: 10px;
         }
-        #addProductForm input {
+        #addProductForm input, #addProductForm select {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -84,7 +84,10 @@
             <tr>
                 <th>Título</th>
                 <th>Descripción</th>
+                <th>Código</th>
                 <th>Precio</th>
+                <th>Stock</th>
+                <th>Categoría</th>
                 <th>Acción</th>
             </tr>
         </thead>
@@ -93,7 +96,10 @@
                 <tr id="{{this._id}}">
                     <td>{{this.title}}</td>
                     <td>{{this.description}}</td>
+                    <td>{{this.code}}</td>
                     <td>${{this.price}}</td>
+                    <td>{{this.stock}}</td>
+                    <td>{{this.category}}</td>
                     <td><button class="deleteButton" data-id="{{this._id}}">Eliminar</button></td>
                 </tr>
             {{/each}}
@@ -112,8 +118,16 @@
         <input type="number" id="price" name="price" required>
         <label for="stock">Stock:</label>
         <input type="number" id="stock" name="stock" required>
-        <label for="category">Categoría:</label> 
-        <input type="text" id="category" name="category" required>
+        <label for="category">Categoría:</label>
+        <select id="category" name="category" required>
+            <option value="">Seleccione una categoría</option>
+            <option value="Pantalones">Pantalones</option>
+            <option value="Buzos">Buzos</option>
+            <option value="Remeras">Remeras</option>
+            <option value="Shorts">Shorts</option>
+            <option value="Camperas">Camperas</option>
+            <option value="Zapatillas">Zapatillas</option>
+        </select>
         <button type="submit">Agregar Producto</button>
     </form>
 
@@ -128,7 +142,10 @@
             row.innerHTML = `
                 <td>${newProduct.title}</td>
                 <td>${newProduct.description}</td>
+                <td>${newProduct.code}</td>
                 <td>$${newProduct.price}</td>
+                <td>${newProduct.stock}</td>
+                <td>${newProduct.category}</td>
                 <td><button class="deleteButton" data-id="${newProduct._id}">Eliminar</button></td>
             `;
             productList.appendChild(row);
@@ -196,7 +213,6 @@
                 }
             });
         }
-
 
         document.querySelectorAll('.deleteButton').forEach(button => {
             button.addEventListener('click', async (event) => {

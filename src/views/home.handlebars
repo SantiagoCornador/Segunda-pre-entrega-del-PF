@@ -45,11 +45,61 @@
             color: #777;
             font-style: italic;
         }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 16px;
+            text-decoration: none;
+            color: #333;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+        }
+        .pagination a:hover {
+            background-color: #c0c0c0;
+        }
+        .pagination .active {
+            background-color: #555;
+            color: #fff;
+        }
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="text"], select {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
     <h1>Lista de Productos</h1>
     <div id="productContainer">
+        <form method="GET" action="/">
+            <input type="text" name="query" placeholder="Buscar por categoría, título o disponibilidad" value="{{query}}">
+            <select name="sort">
+                <option value="">Ordenar por</option>
+                <option value="asc" {{#ifEquals sort 'asc'}}selected{{/ifEquals}}>Precio Ascendente</option>
+                <option value="desc" {{#ifEquals sort 'desc'}}selected{{/ifEquals}}>Precio Descendente</option>
+            </select>
+            <button type="submit">Aplicar Filtros</button>
+            <button type="button" id="resetFilters">Borrar Filtros</button>
+        </form>
+
         {{#if productos.length}}
         <table>
             <thead>
@@ -57,6 +107,8 @@
                     <th>Título</th>
                     <th>Descripción</th>
                     <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th> 
                 </tr>
             </thead>
             <tbody>
@@ -65,13 +117,49 @@
                     <td>{{this.title}}</td>
                     <td>{{this.description}}</td>
                     <td>${{this.price}}</td>
+                    <td>{{this.stock}}</td>
+                    <td>
+                        <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+                    </td> 
                 </tr>
                 {{/each}}
             </tbody>
         </table>
+        <div class="pagination">
+            {{#if hasPrevPage}}
+            <a href="?page={{prevPage}}&limit={{../limit}}&sort={{../sort}}&query={{../query}}">Anterior</a>
+            {{/if}}
+            {{#each paginationPages}}
+            <a href="?page={{this}}&limit={{../limit}}&sort={{../sort}}&query={{../query}}" class="{{#ifEquals ../page this}}active{{/ifEquals}}">{{this}}</a>
+            {{/each}}
+            {{#if hasNextPage}}
+            <a href="?page={{nextPage}}&limit={{../limit}}&sort={{../sort}}&query={{../query}}">Siguiente</a>
+            {{/if}}
+        </div>
         {{else}}
         <p class="empty-message">No hay productos disponibles</p>
         {{/if}}
+        <a href="/api/carts/defaultCartId">Ver carrito</a> 
     </div>
+
+    <script>
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+    async function addToCart(productId) {
+    const response = await fetch(`/api/carts/default/products/${productId}`, {
+        method: 'POST'
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+        alert('Producto agregado al carrito');
+    } else {
+        alert('Error al agregar producto al carrito');
+    }
+}
+
+    </script>
 </body>
 </html>

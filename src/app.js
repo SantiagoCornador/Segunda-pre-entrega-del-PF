@@ -1,23 +1,37 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import handlebars from 'express-handlebars';
+import { create } from 'express-handlebars';
 import mongoose from 'mongoose';
 import __dirname from './utils.js';
 import productRouter from './routes/product.router.js';
-import carritosRouter from './routes/cart.router.js';
+import cartRouter from './routes/cart.router.js';
 import chatRouter from './routes/chat.router.js';
+import viewsRouter from './routes/views.router.js';
 import Message from './models/message.model.js';
+import path from 'path';
+import Handlebars from 'handlebars';
+import CartModel from './models/carts.model.js';
+
+
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 const PORT = 8080;
 
-app.engine('handlebars', handlebars.engine());
-app.set('views', __dirname + '/views');
+const hbs = create({
+    extname: '.handlebars',
+    defaultLayout: 'main',
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true,
+    }
+});
+
+app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
-app.use(express.static(__dirname + '/public'));
+app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -31,11 +45,18 @@ app.use((req, res, next) => {
     next();
 });
 
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
+    return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
+});
+
 app.use('/', productRouter);
 app.use('/api/products', productRouter);
-app.use('/api/carts', carritosRouter);
+app.use('/api/carts', cartRouter);
 app.use('/realtimeproducts', productRouter); 
 app.use('/chat', chatRouter); 
+app.use('/', viewsRouter);
 
 io.on('connection', async (socket) => {
     console.log('Nuevo cliente conectado');
