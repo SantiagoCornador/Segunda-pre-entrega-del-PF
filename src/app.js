@@ -78,9 +78,15 @@ io.on('connection', async (socket) => {
         }
     });
 
+    socket.on('cartUpdated', async (cart) => {
+        io.emit('updateCart', cart);  
+    });
+
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
+
+
 });
 
 app.set('socketio', io);

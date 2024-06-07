@@ -139,7 +139,7 @@
         {{else}}
         <p class="empty-message">No hay productos disponibles</p>
         {{/if}}
-        <a href="/api/carts/defaultCartId">Ver carrito</a> 
+        <a href="/api/carts/{{cart._id}}">Ver carrito</a> 
     </div>
 
     <script>
@@ -147,19 +147,23 @@
             window.location.href = '/';
         });
 
-    async function addToCart(productId) {
-    const response = await fetch(`/api/carts/default/products/${productId}`, {
-        method: 'POST'
-    });
+        async function addToCart(productId) {
+            const clientId = 'defaultClientId'; 
+            const response = await fetch(`/api/carts/products/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-client-id': clientId
+                }
+            });
 
-    const data = await response.json();
-    if (data.status === 'success') {
-        alert('Producto agregado al carrito');
-    } else {
-        alert('Error al agregar producto al carrito');
-    }
-}
-
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert('Producto agregado al carrito');
+            } else {
+                alert('Error al agregar producto al carrito');
+            }
+        }
     </script>
 </body>
 </html>

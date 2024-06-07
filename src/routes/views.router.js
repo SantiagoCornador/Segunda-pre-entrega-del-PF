@@ -31,14 +31,14 @@ router.get('/products', async (req, res) => {
 });
 
 
-router.get('/carts/:cid', async (req, res) => {
-    const cartId = parseInt(req.params.cid);
+router.get('/cart/:cid', async (req, res) => {
+    const cartId = req.params.cid;
     try {
-        const cart = await Cart.findOne({ id: cartId }).populate('products.product').exec();
+        const cart = await CartModel.findById(cartId).populate('products.product');
         if (!cart) {
             return res.status(404).json({ error: 'Carrito no encontrado' });
         }
-        res.render('cart', { products: cart.products });
+        res.render('cart', { cart });
     } catch (error) {
         console.error('Error al obtener carrito:', error);
         res.status(500).json({ error: 'Error al obtener carrito' });
